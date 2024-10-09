@@ -27,7 +27,7 @@
     "ci": "pnpm test && pnpm build && pnpm check-exports",
     "check-exports": "attw --pack . --ignore-rules=cjs-resolves-to-esm",
     "local-release": "changeset version && changeset publish",
-    "prepublishOnly": "pnpm ci"
+    "prepublishOnly": "pnpm run ci"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.16.4",
