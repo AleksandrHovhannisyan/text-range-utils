@@ -45,30 +45,28 @@ export const getTextNodesInRange = (
    */
   export const wrapTextNode = (
     node: Text,
-    params: {
-      /** Element with which to wrap the text node. */
-      wrapperElement: Node;
+    /** Element with which to wrap the text node. */
+    wrapperElement: Node,
+    params?: {
       /** The character offset to start from (inclusive). If not specified, wraps from beginning of node. */
       startOffset?: number;
       /** The character to end at (exclusive). If not specifies, wraps until end of node. */
       endOffset?: number;
     }
   ) => {
-    const { wrapperElement, startOffset, endOffset } = params;
-  
     // Ignore pure-whitespace nodes. Do this here rather than in tree walker so that the range start/end offsets line up with the actual first/last text nodes in the range.
     if (node.nodeType === Node.TEXT_NODE && !node.textContent?.trim()) {
       return;
     }
-  
+ 
     // Select appropriate portion of the text node
     const range = document.createRange();
     range.selectNodeContents(node);
-    if (typeof startOffset !== "undefined") {
-      range.setStart(node, startOffset);
+    if (typeof params?.startOffset !== "undefined") {
+      range.setStart(node, params.startOffset);
     }
-    if (typeof endOffset !== "undefined") {
-      range.setEnd(node, endOffset);
+    if (typeof params?.endOffset !== "undefined") {
+      range.setEnd(node, params?.endOffset);
     }
   
     // Finally, wrap it

@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 import { describe, test, expect } from "vitest";
-import { getTextNodesInRange } from "./index.js";
+import { getTextNodesInRange, wrapTextNode } from "./index.js";
 
 describe("getTextNodesInRange", () => {
   const p = document.createElement("p");
@@ -75,5 +75,54 @@ describe("getTextNodesInRange", () => {
     expect(
       getTextNodesInRange(range, { disallowedAncestorTags: ["p"] })
     ).toStrictEqual([]);
+  });
+});
+
+describe("wrapTextNode", () => {
+  test("ignores non-text nodes", () => {
+    const parent = document.createElement("p");
+    const child = document.createElement("strong");
+    child.textContent = "child";
+    parent.appendChild(child);
+    wrapTextNode(child as unknown as Text, document.createElement("span"));
+    expect(child.parentElement).toStrictEqual(parent);
+  });
+
+  test("wraps full text node", () => {
+    const parent = document.createElement("p");
+    const text = document.createTextNode("wrap me");
+    parent.appendChild(text);
+    expect(text.parentElement).toStrictEqual(parent);
+
+    const wrapper = document.createElement("span");
+    wrapper.classList.add("wrapper");
+    wrapTextNode(text, wrapper);
+    expect(parent.innerHTML).toStrictEqual(
+      '<span class="wrapper">wrap me</span>'
+    );
+  });
+
+  test("ignores empty text nodes", () => {
+    const parent = document.createElement("p");
+    const text = document.createTextNode("");
+    parent.appendChild(text);
+
+    const wrapper = document.createElement("span");
+    wrapTextNode(text, wrapper);
+    expect(parent.innerHTML).toStrictEqual("");
+  });
+
+  test("wraps partially selected text", () => {
+    const parent = document.createElement("p");
+    const text = document.createTextNode("wrap me");
+    parent.appendChild(text);
+    expect(text.parentElement).toStrictEqual(parent);
+
+    const wrapper = document.createElement("span");
+    wrapper.classList.add("wrapper");
+    wrapTextNode(text, wrapper, { startOffset: 1, endOffset: 4 });
+    expect(parent.innerHTML).toStrictEqual(
+      'w<span class="wrapper">rap</span> me'
+    );
   });
 });
