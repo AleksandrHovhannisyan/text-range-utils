@@ -2,12 +2,11 @@
 export const getTextNodesInRange = (
     range: Range,
     options?: {
-      /** (Optional) tag names of parents that should be ignored. If not specified, defaults to `Set(['script', 'style', 'iframe', 'noscript'])`. */
-      disallowedParentTags?: Set<string>;
+      /** If any given text node is a descendant of one of these tags, it will be ignored. */
+      disallowedAncestorTags?: string[];
     }
   ): Text[] => {
-    const { disallowedParentTags } = {
-      disallowedParentTags: new Set(["script", "style", "noscript", "iframe"]),
+    const { disallowedAncestorTags } = {
       ...options,
     };
     const textNodes: Text[] = [];
@@ -16,10 +15,10 @@ export const getTextNodesInRange = (
       range.commonAncestorContainer,
       NodeFilter.SHOW_TEXT,
       (node: Node) => {
-        const parentElement = node.parentElement;
+        const immediateParent = node.parentElement;
         if (
-          parentElement &&
-          disallowedParentTags.has(parentElement.tagName.toLowerCase())
+          immediateParent &&
+          disallowedAncestorTags?.some((tag) => !!immediateParent.closest(tag))
         ) {
           return NodeFilter.FILTER_REJECT;
         }
