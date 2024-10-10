@@ -2,7 +2,11 @@
  * @vitest-environment jsdom
  */
 import { describe, test, expect } from "vitest";
-import { getTextNodesInRange, wrapTextNode } from "./index.js";
+import {
+  getTextNodesInRange,
+  wrapSelectedTextNodes,
+  wrapTextNode,
+} from "./index.js";
 
 describe("getTextNodesInRange", () => {
   const p = document.createElement("p");
@@ -123,6 +127,43 @@ describe("wrapTextNode", () => {
     wrapTextNode(text, wrapper, { startOffset: 1, endOffset: 4 });
     expect(parent.innerHTML).toStrictEqual(
       'w<span class="wrapper">rap</span> me'
+    );
+  });
+});
+
+describe("wrapSelectedTextNodes", () => {
+  test("wraps text nodes in selection", () => {
+    const [text1, text2, text3, text4] = [
+      document.createTextNode("text1"),
+      document.createTextNode("text2"),
+      document.createTextNode("text3"),
+      document.createTextNode("text4"),
+    ];
+    // <div>text1<p><a>text2</a>text3</p>text4</div>
+    const div = document.createElement("div");
+    const p = document.createElement("p");
+    const a = document.createElement("a");
+    div.appendChild(text1);
+    a.appendChild(text2);
+    p.appendChild(a);
+    p.appendChild(text3);
+    div.appendChild(p);
+    div.appendChild(text4);
+    document.body.appendChild(div);
+
+    const range = new Range();
+    range.selectNodeContents(div);
+    range.setStart(div, 0);
+    range.setEnd(div, 2);
+    const selection = window.getSelection()!;
+    selection.removeAllRanges();
+    selection.addRange(range);
+    
+    const wrapper = document.createElement("span");
+    wrapper.classList.add("wrapper");
+    wrapSelectedTextNodes(selection, wrapper);
+    expect(div.innerHTML).toStrictEqual(
+      '<span class="wrapper">text1</span><p><a><span class="wrapper">text2</span></a><span class="wrapper">text3</span></p>text4'
     );
   });
 });
