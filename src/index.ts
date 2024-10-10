@@ -3,7 +3,10 @@ type TextNodeWalkerOptions = {
   disallowedAncestorTags?: string[];
 };
 
-/** Returns all of the text nodes that intersect with the given range. */
+/** Returns all of the text nodes that intersect with the given range. 
+ * @param range The Range to search for text nodes.
+ * @param options Customization options for node searching behavior.
+*/
 export function getTextNodesInRange(
   range: Range,
   options?: TextNodeWalkerOptions
@@ -43,11 +46,11 @@ export function getTextNodesInRange(
 
 /** Wraps the given node's contents in the range `[startOffset, endOffset)`.
  * @param node The text node to wrap.
+ * @param wrapperElement Element with which to wrap the text node. The node will be cloned before wrapping.
  * @param options Customization options
  */
 export function wrapTextNode(
   node: Text,
-  /** Element with which to wrap the text node. */
   wrapperElement: Node,
   options?: {
     /** The character offset to start from (inclusive). If not specified, wraps from beginning of node. */
@@ -121,6 +124,7 @@ export function wrapSelectedTextNodes(
   wrapper: HTMLElement,
   options?: TextNodeWalkerOptions
 ) {
+  // Firefox supports multiple ranges
   for (let rangeIndex = 0; rangeIndex < selection.rangeCount; rangeIndex++) {
     const range = selection.getRangeAt(rangeIndex);
     wrapEachTextNodeInRange(range, wrapper, options);

@@ -11,9 +11,9 @@ import {
 describe("getTextNodesInRange", () => {
   const p = document.createElement("p");
   const [text1, text2, text3] = [
-    document.createTextNode("hello "),
-    document.createTextNode("wo"),
-    document.createTextNode("rld"),
+    document.createTextNode("text1"),
+    document.createTextNode("text2"),
+    document.createTextNode("text3"),
   ];
   const anchor = document.createElement("a");
   anchor.href = "https://example.com";
@@ -30,27 +30,22 @@ describe("getTextNodesInRange", () => {
     range.selectNodeContents(p);
     expect(getTextNodesInRange(range)).toStrictEqual([text1, text2, text3]);
 
-    // "hello "
     range.setStart(text1, 0);
     range.setEnd(text1, text1.length);
     expect(getTextNodesInRange(range)).toStrictEqual([text1]);
 
-    // "hello "
     range.setStart(text1, text1.length);
     range.setEnd(anchor, 0);
     expect(getTextNodesInRange(range)).toStrictEqual([text1]);
 
-    // "hello w"
     range.setStart(text1, 0);
     range.setEnd(text2, 1);
     expect(getTextNodesInRange(range)).toStrictEqual([text1, text2]);
 
-    // "hello world"
     range.setStart(text1, 0);
     range.setEnd(anchor, 2);
     expect(getTextNodesInRange(range)).toStrictEqual([text1, text2, text3]);
 
-    // "or"
     range.setStart(text2, 1);
     range.setEnd(text3, 1);
     expect(getTextNodesInRange(range)).toStrictEqual([text2, text3]);
@@ -94,16 +89,14 @@ describe("wrapTextNode", () => {
 
   test("wraps full text node", () => {
     const parent = document.createElement("p");
-    const text = document.createTextNode("wrap me");
+    const text = document.createTextNode("text");
     parent.appendChild(text);
     expect(text.parentElement).toStrictEqual(parent);
 
     const wrapper = document.createElement("span");
     wrapper.classList.add("wrapper");
     wrapTextNode(text, wrapper);
-    expect(parent.innerHTML).toStrictEqual(
-      '<span class="wrapper">wrap me</span>'
-    );
+    expect(parent.innerHTML).toStrictEqual('<span class="wrapper">text</span>');
   });
 
   test("ignores empty text nodes", () => {
@@ -118,16 +111,14 @@ describe("wrapTextNode", () => {
 
   test("wraps partially selected text", () => {
     const parent = document.createElement("p");
-    const text = document.createTextNode("wrap me");
+    const text = document.createTextNode("text");
     parent.appendChild(text);
     expect(text.parentElement).toStrictEqual(parent);
 
     const wrapper = document.createElement("span");
     wrapper.classList.add("wrapper");
     wrapTextNode(text, wrapper, { startOffset: 1, endOffset: 4 });
-    expect(parent.innerHTML).toStrictEqual(
-      'w<span class="wrapper">rap</span> me'
-    );
+    expect(parent.innerHTML).toStrictEqual('t<span class="wrapper">ext</span>');
   });
 });
 
@@ -158,7 +149,7 @@ describe("wrapSelectedTextNodes", () => {
     const selection = window.getSelection()!;
     selection.removeAllRanges();
     selection.addRange(range);
-    
+
     const wrapper = document.createElement("span");
     wrapper.classList.add("wrapper");
     wrapSelectedTextNodes(selection, wrapper);
