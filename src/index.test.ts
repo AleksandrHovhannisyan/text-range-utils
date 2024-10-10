@@ -1,12 +1,17 @@
 /**
  * @vitest-environment jsdom
  */
-import { describe, test, expect } from "vitest";
+import { describe, test, expect, beforeEach } from "vitest";
 import {
   getTextNodesInRange,
   wrapSelectedTextNodes,
   wrapTextNode,
 } from "./index.js";
+
+beforeEach(() => {
+  document.body.innerHTML = '';
+  window.getSelection()?.removeAllRanges();
+})
 
 describe("getTextNodesInRange", () => {
   const p = document.createElement("p");
@@ -87,18 +92,6 @@ describe("wrapTextNode", () => {
     expect(child.parentElement).toStrictEqual(parent);
   });
 
-  test("wraps full text node", () => {
-    const parent = document.createElement("p");
-    const text = document.createTextNode("text");
-    parent.appendChild(text);
-    expect(text.parentElement).toStrictEqual(parent);
-
-    const wrapper = document.createElement("span");
-    wrapper.classList.add("wrapper");
-    wrapTextNode(text, wrapper);
-    expect(parent.innerHTML).toStrictEqual('<span class="wrapper">text</span>');
-  });
-
   test("ignores empty text nodes", () => {
     const parent = document.createElement("p");
     const text = document.createTextNode("");
@@ -109,28 +102,53 @@ describe("wrapTextNode", () => {
     expect(parent.innerHTML).toStrictEqual("");
   });
 
-  test("wraps partially selected text", () => {
+  test("wraps and unwraps full text node", () => {
     const parent = document.createElement("p");
     const text = document.createTextNode("text");
     parent.appendChild(text);
+    document.body.appendChild(parent);
     expect(text.parentElement).toStrictEqual(parent);
 
     const wrapper = document.createElement("span");
     wrapper.classList.add("wrapper");
-    wrapTextNode(text, wrapper, { startOffset: 1, endOffset: 4 });
-    expect(parent.innerHTML).toStrictEqual('t<span class="wrapper">ext</span>');
+    const unwrapTextNode = wrapTextNode(text, wrapper);
+    expect(parent.innerHTML).toStrictEqual('<span class="wrapper">text</span>');
+    unwrapTextNode();
+    expect(parent.innerHTML).toStrictEqual("text");
+  });
+
+  test("wraps and unwraps partially selected text", () => {
+    const parent = document.createElement("p");
+    const [text1, text2, text3] = [
+      document.createTextNode("text1"),
+      document.createTextNode("text2"),
+      document.createTextNode("text3"),
+    ];
+    parent.appendChild(text1);
+    parent.appendChild(text2);
+    parent.appendChild(text3);
+    expect(text1.parentElement).toStrictEqual(parent);
+
+    const wrapper = document.createElement("span");
+    wrapper.classList.add("wrapper");
+    const unwrapTextNode = wrapTextNode(text2, wrapper, {
+      startOffset: 1,
+      endOffset: 4,
+    });
+    expect(parent.innerHTML).toStrictEqual('text1t<span class="wrapper">ext</span>2text3');
+    unwrapTextNode();
+    expect(parent.innerHTML).toStrictEqual("text1text2text3");
   });
 });
 
 describe("wrapSelectedTextNodes", () => {
-  test("wraps text nodes in selection", () => {
+  test("wraps and unwraps text nodes in selection", () => {
     const [text1, text2, text3, text4] = [
       document.createTextNode("text1"),
       document.createTextNode("text2"),
       document.createTextNode("text3"),
       document.createTextNode("text4"),
     ];
-    // <div>text1<p><a>text2</a>text3</p>text4</div>
     const div = document.createElement("div");
     const p = document.createElement("p");
     const a = document.createElement("a");
@@ -141,6 +159,7 @@ describe("wrapSelectedTextNodes", () => {
     div.appendChild(p);
     div.appendChild(text4);
     document.body.appendChild(div);
+    expect(document.body.innerHTML).toStrictEqual('<div>text1<p><a>text2</a>text3</p>text4</div>');
 
     const range = new Range();
     range.selectNodeContents(div);
@@ -152,9 +171,11 @@ describe("wrapSelectedTextNodes", () => {
 
     const wrapper = document.createElement("span");
     wrapper.classList.add("wrapper");
-    wrapSelectedTextNodes(selection, wrapper);
+    const unwrapSelectedTextNodes = wrapSelectedTextNodes(selection, wrapper);
     expect(div.innerHTML).toStrictEqual(
       '<span class="wrapper">text1</span><p><a><span class="wrapper">text2</span></a><span class="wrapper">text3</span></p>text4'
     );
+    unwrapSelectedTextNodes();
+    expect(document.body.innerHTML).toStrictEqual('<div>text1<p><a>text2</a>text3</p>text4</div>');
   });
 });
