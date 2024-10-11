@@ -1,7 +1,14 @@
-type TextNodeWalkerOptions = {
+export type GetTextNodesOptions = {
   /** If any given text node is a descendant of one of these tags, it will be ignored. */
   disallowedAncestorTags?: string[];
 };
+
+export type WrapTextNodeOptions = {
+  /** The character offset to start from (inclusive). If not specified, wraps from beginning of node. */
+  startOffset?: number;
+  /** The character to end at (exclusive). If not specifies, wraps until end of node. */
+  endOffset?: number;
+} 
 
 type UnwrapFn = () => void;
 
@@ -11,7 +18,7 @@ type UnwrapFn = () => void;
  */
 export function getTextNodesInRange(
   range: Range,
-  options?: TextNodeWalkerOptions
+  options?: GetTextNodesOptions
 ): Text[] {
   const { disallowedAncestorTags } = {
     ...options,
@@ -46,6 +53,23 @@ export function getTextNodesInRange(
   return textNodes;
 }
 
+/** Returns all text nodes that are partially or fully selected.
+ * @param selection A selection spanning the text nodes to return.
+ * @param options Customization options.
+ */
+export function getSelectedTextNodes(
+  selection: Selection,
+  options?: GetTextNodesOptions
+): Text[] {
+  const allTextNodes: Text[] = [];
+  for (let i = 0; i < selection.rangeCount; i++) {
+    const range = selection.getRangeAt(i);
+    const textNodesInRange = getTextNodesInRange(range, options);
+    allTextNodes.push(...textNodesInRange);
+  }
+  return allTextNodes;
+}
+
 /** Wraps the given node's contents in the range `[startOffset, endOffset)`. Returns a function to unwrap the text node.
  * @param node The text node to wrap.
  * @param wrapperElement Element with which to wrap the text node. The node will be cloned before wrapping.
@@ -54,16 +78,16 @@ export function getTextNodesInRange(
 export function wrapTextNode(
   node: Text,
   wrapperElement: Node,
-  options?: {
-    /** The character offset to start from (inclusive). If not specified, wraps from beginning of node. */
-    startOffset?: number;
-    /** The character to end at (exclusive). If not specifies, wraps until end of node. */
-    endOffset?: number;
-  }
+  options?: WrapTextNodeOptions
 ): UnwrapFn {
+  const noOp = () => {};
+  // Ignore non-text nodes
+  if (node.nodeType !== Node.TEXT_NODE) {
+    return noOp;
+  }
   // Ignore pure-whitespace nodes. Do this here rather than in tree walker so that the range start/end offsets line up with the actual first/last text nodes in the range.
-  if (node.nodeType === Node.TEXT_NODE && !node.textContent?.trim()) {
-    return () => {};
+  if (!node.textContent?.trim()) {
+    return noOp;
   }
 
   // Select appropriate portion of the text node
@@ -90,23 +114,6 @@ export function wrapTextNode(
   };
 }
 
-/** Returns all text nodes that are partially or fully selected.
- * @param selection A selection spanning the text nodes to return.
- * @param options Customization options.
- */
-export function getSelectedTextNodes(
-  selection: Selection,
-  options?: TextNodeWalkerOptions
-): Text[] {
-  const allTextNodes: Text[] = [];
-  for (let i = 0; i < selection.rangeCount; i++) {
-    const range = selection.getRangeAt(i);
-    const textNodesInRange = getTextNodesInRange(range, options);
-    allTextNodes.push(...textNodesInRange);
-  }
-  return allTextNodes;
-}
-
 /** Wraps each text node in a range with the given wrapper element. Returns a function to unwrap each wrapped text node.
  * @param range A Range spanning the text nodes to wrap.
  * @param wrapper An element with which to wrap each text node.
@@ -115,7 +122,7 @@ export function getSelectedTextNodes(
 export function wrapRangeTextNodes(
   range: Range,
   wrapper: HTMLElement,
-  options?: TextNodeWalkerOptions
+  options?: GetTextNodesOptions
 ): UnwrapFn {
   const unwrapCallbacks: UnwrapFn[] = [];
   const selectedTextNodes = getTextNodesInRange(range, options);
@@ -139,7 +146,7 @@ export function wrapRangeTextNodes(
 export function wrapSelectedTextNodes(
   selection: Selection,
   wrapper: HTMLElement,
-  options?: TextNodeWalkerOptions
+  options?: GetTextNodesOptions
 ): UnwrapFn {
   const unwrapCallbacks: UnwrapFn[] = [];
   // Firefox supports multiple ranges
