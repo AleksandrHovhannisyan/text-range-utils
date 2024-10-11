@@ -1,11 +1,15 @@
 {
   "name": "text-range-utils",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Utils for working with text nodes in Ranges.",
   "main": "dist/index.js",
   "keywords": [
     "text",
-    "range"
+    "text node",
+    "range",
+    "selection",
+    "surround",
+    "wrap"
   ],
   "author": "Aleksandr Hovhannisyan <aleksandrhovhannisyan@gmail.com>",
   "license": "MIT",
