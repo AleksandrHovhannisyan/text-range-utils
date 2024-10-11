@@ -80,14 +80,9 @@ export function wrapTextNode(
   wrapperElement: Node,
   options?: WrapTextNodeOptions
 ): UnwrapFn {
-  const noOp = () => {};
-  // Ignore non-text nodes
-  if (node.nodeType !== Node.TEXT_NODE) {
-    return noOp;
-  }
-  // Ignore pure-whitespace nodes. Do this here rather than in tree walker so that the range start/end offsets line up with the actual first/last text nodes in the range.
-  if (!node.textContent?.trim()) {
-    return noOp;
+  // Ignore non-text nodes and pure-whitespace nodes. Do this here rather than in tree walker so that the range start/end offsets line up with the actual first/last text nodes in the range.
+  if (node.nodeType !== Node.TEXT_NODE || !node.textContent?.trim()) {
+    return () => {};
   }
 
   // Select appropriate portion of the text node
