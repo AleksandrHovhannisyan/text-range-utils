@@ -17,5 +17,6 @@
       "sourceMap": true,
       "declaration": true,
       "lib": ["ES2022", "DOM"]
-    }
+    },
+    "exclude": ["dist", "**/*.test.ts"]
   }

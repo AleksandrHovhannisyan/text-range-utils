@@ -18,9 +18,10 @@
     "dist"
   ],
   "scripts": {
+    "clean": "rm -rf dist",
     "test": "vitest run",
     "test:watch": "vitest watch",
-    "build": "tsc",
+    "build": "pnpm clean && tsc",
     "ci": "pnpm test && pnpm build && pnpm check-exports",
     "check-exports": "attw --pack . --ignore-rules=cjs-resolves-to-esm",
     "local-release": "changeset version && changeset publish",
