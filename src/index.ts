@@ -32,7 +32,7 @@ export function getTextNodesInRange(
       const immediateParent = node.parentElement;
       if (
         immediateParent &&
-        disallowedAncestorTags?.some((tag) => !!immediateParent.closest(tag))
+        disallowedAncestorTags?.some((tag) => !!immediateParent.closest(tag.toLowerCase()))
       ) {
         return NodeFilter.FILTER_REJECT;
       }
