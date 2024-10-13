@@ -1,6 +1,6 @@
 export type GetTextNodesOptions = {
   /** If any given text node is a descendant of one of these tags, it will be ignored. */
-  disallowedAncestorTags?: string[];
+  disallowedAncestorTags?: (keyof HTMLElementTagNameMap)[];
 };
 
 export type WrapTextNodeOptions = {
