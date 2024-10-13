@@ -1,5 +1,11 @@
 # text-range-utils
 
+## 2.0.1
+
+### Patch Changes
+
+- 41f32d5: fixes typo in documentation
+
 ## 2.0.0
 
 ### Major Changes
