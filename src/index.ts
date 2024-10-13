@@ -1,5 +1,5 @@
 export type GetTextNodesOptions = {
-  /** If any given text node is a descendant of one of these tags, it will be ignored. */
+  /** Any text node that is a descendant of one of these tags will be ignored. */
   disallowedAncestorTags?: (keyof HTMLElementTagNameMap)[];
 };
 
@@ -15,7 +15,8 @@ export type WrapRangeTextNodesOptions = GetTextNodesOptions & {
   shouldWrapNode?: (node: Text) => boolean;
 }
 
-type UnwrapFn = () => void;
+/** A callback that unwraps a node. */
+export type UnwrapFn = () => void;
 
 /** Returns all of the text nodes that intersect with the given range.
  * @param range The Range to search for text nodes.
