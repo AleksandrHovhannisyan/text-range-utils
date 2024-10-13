@@ -82,7 +82,7 @@ if (selection) {
 type WrapTextNodeOptions = {
   /** The character offset to start from (inclusive). If not specified, wraps from beginning of node. */
   startOffset?: number;
-  /** The character to end at (exclusive). If not specifies, wraps until end of node. */
+  /** The character to end at (exclusive). If not specified, wraps until end of node. */
   endOffset?: number;
 };
 ```
