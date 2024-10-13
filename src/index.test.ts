@@ -92,14 +92,15 @@ describe("wrapTextNode", () => {
     expect(child.parentElement).toStrictEqual(parent);
   });
 
-  test("ignores empty text nodes", () => {
+  test("wraps empty text nodes", () => {
     const parent = document.createElement("p");
     const text = document.createTextNode("");
     parent.appendChild(text);
 
     const wrapper = document.createElement("span");
+    wrapper.classList.add('wrapper');
     wrapTextNode(text, wrapper);
-    expect(parent.innerHTML).toStrictEqual("");
+    expect(parent.innerHTML).toStrictEqual('<span class="wrapper"></span>');
   });
 
   test("wraps and unwraps full text node", () => {
@@ -174,6 +175,78 @@ describe("wrapSelectedTextNodes", () => {
     const unwrapSelectedTextNodes = wrapSelectedTextNodes(selection, wrapper);
     expect(div.innerHTML).toStrictEqual(
       '<span class="wrapper">text1</span><p><a><span class="wrapper">text2</span></a><span class="wrapper">text3</span></p>text4'
+    );
+    unwrapSelectedTextNodes();
+    expect(document.body.innerHTML).toStrictEqual('<div>text1<p><a>text2</a>text3</p>text4</div>');
+  });
+  test('respects options.disallowedAncestorTags', () => {
+    const [text1, text2, text3, text4] = [
+      document.createTextNode("text1"),
+      document.createTextNode("text2"),
+      document.createTextNode("text3"),
+      document.createTextNode("text4"),
+    ];
+    const div = document.createElement("div");
+    const p = document.createElement("p");
+    const a = document.createElement("a");
+    div.appendChild(text1);
+    a.appendChild(text2);
+    p.appendChild(a);
+    p.appendChild(text3);
+    div.appendChild(p);
+    div.appendChild(text4);
+    document.body.appendChild(div);
+    expect(document.body.innerHTML).toStrictEqual('<div>text1<p><a>text2</a>text3</p>text4</div>');
+
+    const range = new Range();
+    range.selectNodeContents(div);
+    range.setStart(div, 0);
+    range.setEnd(div, 2);
+    const selection = window.getSelection()!;
+    selection.removeAllRanges();
+    selection.addRange(range);
+
+    const wrapper = document.createElement("span");
+    wrapper.classList.add("wrapper");
+    const unwrapSelectedTextNodes = wrapSelectedTextNodes(selection, wrapper, { disallowedAncestorTags: ["p"] });
+    expect(div.innerHTML).toStrictEqual(
+      '<span class="wrapper">text1</span><p><a>text2</a>text3</p>text4'
+    );
+    unwrapSelectedTextNodes();
+    expect(document.body.innerHTML).toStrictEqual('<div>text1<p><a>text2</a>text3</p>text4</div>');
+  })
+  test("respects options.shouldWrapNode", () => {
+    const [text1, text2, text3, text4] = [
+      document.createTextNode("text1"),
+      document.createTextNode("text2"),
+      document.createTextNode("text3"),
+      document.createTextNode("text4"),
+    ];
+    const div = document.createElement("div");
+    const p = document.createElement("p");
+    const a = document.createElement("a");
+    div.appendChild(text1);
+    a.appendChild(text2);
+    p.appendChild(a);
+    p.appendChild(text3);
+    div.appendChild(p);
+    div.appendChild(text4);
+    document.body.appendChild(div);
+    expect(document.body.innerHTML).toStrictEqual('<div>text1<p><a>text2</a>text3</p>text4</div>');
+
+    const range = new Range();
+    range.selectNodeContents(div);
+    range.setStart(div, 0);
+    range.setEnd(div, 2);
+    const selection = window.getSelection()!;
+    selection.removeAllRanges();
+    selection.addRange(range);
+
+    const wrapper = document.createElement("span");
+    wrapper.classList.add("wrapper");
+    const unwrapSelectedTextNodes = wrapSelectedTextNodes(selection, wrapper, { shouldWrapNode: (node) => node.textContent !== 'text2' });
+    expect(div.innerHTML).toStrictEqual(
+      '<span class="wrapper">text1</span><p><a>text2</a><span class="wrapper">text3</span></p>text4'
     );
     unwrapSelectedTextNodes();
     expect(document.body.innerHTML).toStrictEqual('<div>text1<p><a>text2</a>text3</p>text4</div>');
