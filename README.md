@@ -25,9 +25,18 @@ See below for details.
 
 ### `getTextNodesInRange(range: Range, options?: GetTextNodesOptions): Text[]`
 
-- Returns all text nodes that intersect with the given range.
+Returns all text nodes that intersect with the given range.
 
-Example:
+#### Options
+
+```ts
+type GetTextNodesOptions = {
+  /** Any text node that is a descendant of one of these tags will be ignored. */
+  disallowedAncestorTags?: (keyof HTMLElementTagNameMap)[];
+};
+```
+
+#### Examples
 
 ```ts
 const range = new Range();
@@ -41,7 +50,16 @@ const textNodes = getTextNodesInRange(range, {
 - Returns all text nodes that intersect with the given selection.
 - Handles selections that have multiple ranges (Firefox).
 
-Example:
+#### Options
+
+```ts
+type GetTextNodesOptions = {
+  /** Any text node that is a descendant of one of these tags will be ignored. */
+  disallowedAncestorTags?: (keyof HTMLElementTagNameMap)[];
+};
+```
+
+#### Examples
 
 ```ts
 const selection = window.getSelection();
@@ -55,10 +73,21 @@ if (selection) {
 ### `wrapTextNode(node: Text, wrapperElement: Node, options?: WrapTextNodeOptions): UnwrapFn`
 
 - Wraps `node` with `wrapperElement` while preserving all other children and sibling relationships.
-- Ignores non-text nodes and empty text nodes.
+- Ignores non-text nodes.
 - Returns a function to undo the wrapping.
 
-Example:
+#### Options
+
+```ts
+type WrapTextNodeOptions = {
+  /** The character offset to start from (inclusive). If not specified, wraps from beginning of node. */
+  startOffset?: number;
+  /** The character to end at (exclusive). If not specifies, wraps until end of node. */
+  endOffset?: number;
+};
+```
+
+#### Examples
 
 ```ts
 const wrapper = document.createElement("span");
@@ -73,20 +102,42 @@ const unwrap = wrapTextNode(textNode, wrapper, {
 unwrap();
 ```
 
-### `wrapRangeTextNodes(range: Range, wrapper: HTMLElement, options?: GetTextNodesOptions): UnwrapFn`
+### `wrapRangeTextNodes(range: Range, wrapper: HTMLElement, options?: WrapRangeTextNodesOptions): UnwrapFn`
 
 - Wraps each text node in `range` with the given wrapper.
 - Returns a function to undo the wrapping for all text nodes.
+
+#### Options
+
+```ts
+type WrapRangeTextNodesOptions = GetTextNodesOptions & {
+  /** Optional callback to filter which text nodes are wrapped. If this function returns `true`, `node` will be wrapped; else, it will be ignored. */
+  shouldWrapNode?: (node: Text) => boolean;
+}
+```
+
+#### Examples
 
 ```ts
 const range = new Range();
 const unwrap = wrapRangeTextNodes(range, wrapper);
 ```
 
-### `wrapSelectedTextNodes(selection: Selection, wrapper: HTMLElement, options?: GetTextNodesOptions): UnwrapFn`
+### `wrapSelectedTextNodes(selection: Selection, wrapper: HTMLElement, options?: WrapRangeTextNodesOptions): UnwrapFn`
 
 - Wraps each text node in `selection` with the given wrapper.
 - Returns a function to undo the wrapping for all text nodes.
+
+#### Options
+
+```ts
+type WrapRangeTextNodesOptions = GetTextNodesOptions & {
+  /** Optional callback to filter which text nodes are wrapped. If this function returns `true`, `node` will be wrapped; else, it will be ignored. */
+  shouldWrapNode?: (node: Text) => boolean;
+}
+```
+
+#### Examples
 
 ```ts
 const selection = window.getSelection();

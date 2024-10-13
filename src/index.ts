@@ -1,6 +1,6 @@
 export type GetTextNodesOptions = {
-  /** If any given text node is a descendant of one of these tags, it will be ignored. */
-  disallowedAncestorTags?: string[];
+  /** Any text node that is a descendant of one of these tags will be ignored. */
+  disallowedAncestorTags?: (keyof HTMLElementTagNameMap)[];
 };
 
 export type WrapTextNodeOptions = {
@@ -8,9 +8,15 @@ export type WrapTextNodeOptions = {
   startOffset?: number;
   /** The character to end at (exclusive). If not specifies, wraps until end of node. */
   endOffset?: number;
-} 
+};
 
-type UnwrapFn = () => void;
+export type WrapRangeTextNodesOptions = GetTextNodesOptions & {
+  /** Optional callback to filter which text nodes are wrapped. If this function returns `true`, `node` will be wrapped; else, it will be ignored. */
+  shouldWrapNode?: (node: Text) => boolean;
+}
+
+/** A callback that unwraps a node. */
+export type UnwrapFn = () => void;
 
 /** Returns all of the text nodes that intersect with the given range.
  * @param range The Range to search for text nodes.
@@ -32,7 +38,9 @@ export function getTextNodesInRange(
       const immediateParent = node.parentElement;
       if (
         immediateParent &&
-        disallowedAncestorTags?.some((tag) => !!immediateParent.closest(tag.toLowerCase()))
+        disallowedAncestorTags?.some(
+          (tag) => !!immediateParent.closest(tag.toLowerCase())
+        )
       ) {
         return NodeFilter.FILTER_REJECT;
       }
@@ -80,8 +88,8 @@ export function wrapTextNode(
   wrapperElement: Node,
   options?: WrapTextNodeOptions
 ): UnwrapFn {
-  // Ignore non-text nodes and pure-whitespace nodes. Do this here rather than in tree walker so that the range start/end offsets line up with the actual first/last text nodes in the range.
-  if (node.nodeType !== Node.TEXT_NODE || !node.textContent?.trim()) {
+  // Ignore non-text nodes.
+  if (node.nodeType !== Node.TEXT_NODE) {
     return () => {};
   }
 
@@ -117,11 +125,15 @@ export function wrapTextNode(
 export function wrapRangeTextNodes(
   range: Range,
   wrapper: HTMLElement,
-  options?: GetTextNodesOptions
+  options?: WrapRangeTextNodesOptions
 ): UnwrapFn {
+  const { shouldWrapNode, ...getTextNodeOptions } = { ...options };
   const unwrapCallbacks: UnwrapFn[] = [];
-  const selectedTextNodes = getTextNodesInRange(range, options);
+  const selectedTextNodes = getTextNodesInRange(range, getTextNodeOptions);
   selectedTextNodes.forEach((node) => {
+    if (typeof shouldWrapNode !== 'undefined' && !shouldWrapNode(node)) {
+      return;
+    }
     let startOffset =
       node === range.startContainer ? range.startOffset : undefined;
     let endOffset = node === range.endContainer ? range.endOffset : undefined;
@@ -133,23 +145,24 @@ export function wrapRangeTextNodes(
   };
 }
 
-/** Wraps each text node in the selection with the given wrapper element. Returns a function to unwrap each wrapped text node.
+/** Wraps each eligible text node in the selection with the given wrapper element. Returns a function to unwrap each wrapped text node.
  * @param selection A selection spanning the text nodes to wrap.
- * @param wrapTextNode A function to wrap each text node.
+ * @param wrapper The HTML element with which to wrap each eligible text node.
  * @param options Customization options.
  */
 export function wrapSelectedTextNodes(
   selection: Selection,
   wrapper: HTMLElement,
-  options?: GetTextNodesOptions
+  options?: WrapRangeTextNodesOptions
 ): UnwrapFn {
   const unwrapCallbacks: UnwrapFn[] = [];
   // Firefox supports multiple ranges
   for (let rangeIndex = 0; rangeIndex < selection.rangeCount; rangeIndex++) {
     const range = selection.getRangeAt(rangeIndex);
-    unwrapCallbacks.push(wrapRangeTextNodes(range, wrapper, options));
+    const unwrap = wrapRangeTextNodes(range, wrapper, options);
+    unwrapCallbacks.push(unwrap);
   }
   return function unwrapSelectedTextNodes() {
     unwrapCallbacks.forEach((unwrap) => unwrap());
-  }
+  };
 }
