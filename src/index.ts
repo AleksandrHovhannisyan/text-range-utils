@@ -1,6 +1,9 @@
+// https://x.com/mattpocockuk/status/1821926395380986219
+type LooseStringUnion<T> = T | (string & {});
+
 export type GetTextNodesOptions = {
   /** Any text node that is a descendant of one of these tags will be ignored. */
-  disallowedAncestorTags?: (keyof HTMLElementTagNameMap)[];
+  disallowedAncestorTags?: (LooseStringUnion<keyof HTMLElementTagNameMap>)[];
 };
 
 export type WrapTextNodeOptions = {
