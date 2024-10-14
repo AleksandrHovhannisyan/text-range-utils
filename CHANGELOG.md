@@ -1,5 +1,11 @@
 # text-range-utils
 
+## 2.0.2
+
+### Patch Changes
+
+- dd81a88: Loosen typing for disallowedAncestorTags
+
 ## 2.0.1
 
 ### Patch Changes
