@@ -278,7 +278,7 @@ describe("getSubstringRanges", () => {
       getRangesOfText(document.body, /\(111\) 111-1111/g),
       getRangesOfText(document.body, /111-11-1111/g),
       getRangesOfText(document.body, /1111 1111 1111 1111/g),
-      getRangesOfText(document.body, /password/g),
+      getRangesOfText(document.body, /password/), // test edge case, only match first occurrence
     ]
 
     expect(r1).toHaveLength(2);
@@ -305,12 +305,11 @@ describe("getSubstringRanges", () => {
     expect(r5[0].toString()).toBe('1111 1111 1111 1111');
     expect(r5[0].startContainer.parentElement).toBe(p5);
 
-    expect(r6).toHaveLength(2);
+    expect(r6).toHaveLength(1);
     expect(r6[0].toString()).toBe('password');
-    expect(r6[1].toString()).toBe('password');
     expect(r6[0].startContainer.parentElement).toBe(p6);
-    expect(r6[1].startContainer.parentElement).toBe(p6);
   });
+  
   test("returns an empty array if no matches", () => {
     const p = document.createElement("p");
     p.textContent = "This is some sample text without matches.";

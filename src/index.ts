@@ -186,14 +186,13 @@ export function getRangesOfText(root: Node, regex: RegExp): Range[] {
   const textNodes = getTextNodes(root);
 
   textNodes.forEach((textNode) => {
-    let match: RegExpExecArray | null;
     const textContent = textNode.textContent;
-    while ((match = regex.exec(textContent)) !== null) {
-      const range = document.createRange();
-      range.setStart(textNode, match.index);
-      range.setEnd(textNode, match.index + match[0].length);
-      ranges.push(range);
-    }
+    const match = regex.exec(textContent);
+    if (!match) return;
+    const range = document.createRange();
+    range.setStart(textNode, match.index);
+    range.setEnd(textNode, match.index + match[0].length);
+    ranges.push(range);
   })
 
   return ranges;
