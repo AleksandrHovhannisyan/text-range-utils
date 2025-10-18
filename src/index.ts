@@ -21,21 +21,17 @@ export type WrapRangeTextNodesOptions = GetTextNodesOptions & {
 /** A callback that unwraps a node. */
 export type UnwrapFn = () => void;
 
-/** Returns all of the text nodes that intersect with the given range.
- * @param range The Range to search for text nodes.
- * @param options Customization options for node searching behavior.
+/**
+ * Returns all text nodes under the given root node and its descendents.
  */
-export function getTextNodesInRange(
-  range: Range,
-  options?: GetTextNodesOptions
-): Text[] {
+export function getTextNodes(root: Node, options?: GetTextNodesOptions): Text[] {
   const { disallowedAncestorTags } = {
     ...options,
   };
   const textNodes: Text[] = [];
 
   const walker = document.createTreeWalker(
-    range.commonAncestorContainer,
+    root,
     NodeFilter.SHOW_TEXT,
     (node: Node) => {
       const immediateParent = node.parentElement;
@@ -47,13 +43,11 @@ export function getTextNodesInRange(
       ) {
         return NodeFilter.FILTER_REJECT;
       }
-      return range.intersectsNode(node)
-        ? NodeFilter.FILTER_ACCEPT
-        : NodeFilter.FILTER_REJECT;
+      return NodeFilter.FILTER_ACCEPT;
     }
   );
-  // commonAncestorContainer would be a text node only if the range encompasses pure text. Otherwise, if it spans element boundaries, get nextNode.
   let currentNode =
+  // You'd think this would always be true, but apparently not!
     walker.currentNode.nodeType === Node.TEXT_NODE
       ? walker.currentNode
       : walker.nextNode();
@@ -62,6 +56,17 @@ export function getTextNodesInRange(
     currentNode = walker.nextNode();
   }
   return textNodes;
+}
+
+/** Returns all of the text nodes that intersect with the given range.
+ * @param range The Range to search for text nodes.
+ * @param options Customization options for node searching behavior.
+ */
+export function getTextNodesInRange(
+  range: Range,
+  options?: GetTextNodesOptions
+): Text[] {
+  return getTextNodes(range.commonAncestorContainer, options).filter((node) => range.intersectsNode(node));
 }
 
 /** Returns all text nodes that are partially or fully selected.
@@ -93,7 +98,7 @@ export function wrapTextNode(
 ): UnwrapFn {
   // Ignore non-text nodes.
   if (node.nodeType !== Node.TEXT_NODE) {
-    return () => {};
+    return () => { };
   }
 
   // Select appropriate portion of the text node
@@ -168,4 +173,28 @@ export function wrapSelectedTextNodes(
   return function unwrapSelectedTextNodes() {
     unwrapCallbacks.forEach((unwrap) => unwrap());
   };
+}
+
+/**
+ * Returns ranges for all text substrings matching the given regex in the root ancestor's subtree.
+ * @param root The common ancestor node to start searching from
+ * @param regex The pattern of text to search for
+ * @returns One range per matching substring in the root ancestor's subtree of text nodes
+ */
+export function getRangesOfText(root: Node, regex: RegExp): Range[] {
+  const ranges: Range[] = [];
+  const textNodes = getTextNodes(root);
+
+  textNodes.forEach((textNode) => {
+    let match: RegExpExecArray | null;
+    const textContent = textNode.textContent;
+    while ((match = regex.exec(textContent)) !== null) {
+      const range = document.createRange();
+      range.setStart(textNode, match.index);
+      range.setEnd(textNode, match.index + match[0].length);
+      ranges.push(range);
+    }
+  })
+
+  return ranges;
 }

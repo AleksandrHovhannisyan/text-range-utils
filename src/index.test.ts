@@ -6,6 +6,7 @@ import {
   getTextNodesInRange,
   wrapSelectedTextNodes,
   wrapTextNode,
+  getRangesOfText,
 } from "./index.js";
 
 beforeEach(() => {
@@ -252,3 +253,70 @@ describe("wrapSelectedTextNodes", () => {
     expect(document.body.innerHTML).toStrictEqual('<div>text1<p><a>text2</a>text3</p>text4</div>');
   });
 });
+
+describe("getSubstringRanges", () => {
+  test("returns ranges matching the regex", () => {
+    const [p1, p2, p3, p4, p5, p6] = [
+      document.createElement("p"),
+      document.createElement("p"),
+      document.createElement("p"),
+      document.createElement("p"),
+      document.createElement("p"),
+      document.createElement("p"),
+    ];
+    p1.innerHTML = 'I live on 123 Main St in city';
+    p2.innerHTML = 'Contact me at test@example.com or (111) 111-1111';
+    p3.innerHTML = 'Have you ever been to 123 Main St?';
+    p4.innerHTML = 'My SSN is 111-11-1111 and my email is test@example.com in case you forgot';
+    p5.innerHTML = '1111 1111 1111 1111 is my credit card number';
+    p6.innerHTML = 'My password is password';
+    document.body.append(p1, p2, p3, p4, p5, p6);
+
+    const [r1, r2, r3, r4, r5, r6] = [
+      getRangesOfText(document.body, /123 Main St/g),
+      getRangesOfText(document.body, /test@example\.com/g),
+      getRangesOfText(document.body, /\(111\) 111-1111/g),
+      getRangesOfText(document.body, /111-11-1111/g),
+      getRangesOfText(document.body, /1111 1111 1111 1111/g),
+      getRangesOfText(document.body, /password/g),
+    ]
+
+    expect(r1).toHaveLength(2);
+    expect(r1[0].toString()).toBe('123 Main St');
+    expect(r1[0].startContainer.parentElement).toBe(p1);
+    expect(r1[1].toString()).toBe('123 Main St');
+    expect(r1[1].startContainer.parentElement).toBe(p3);
+    
+    expect(r2).toHaveLength(2);
+    expect(r2[0].toString()).toBe('test@example.com');
+    expect(r2[0].startContainer.parentElement).toBe(p2);
+    expect(r2[1].toString()).toBe('test@example.com');
+    expect(r2[1].startContainer.parentElement).toBe(p4);
+
+    expect(r3).toHaveLength(1);
+    expect(r3[0].toString()).toBe('(111) 111-1111');
+    expect(r3[0].startContainer.parentElement).toBe(p2);
+
+    expect(r4).toHaveLength(1);
+    expect(r4[0].toString()).toBe('111-11-1111');
+    expect(r4[0].startContainer.parentElement).toBe(p4);
+
+    expect(r5).toHaveLength(1);
+    expect(r5[0].toString()).toBe('1111 1111 1111 1111');
+    expect(r5[0].startContainer.parentElement).toBe(p5);
+
+    expect(r6).toHaveLength(2);
+    expect(r6[0].toString()).toBe('password');
+    expect(r6[1].toString()).toBe('password');
+    expect(r6[0].startContainer.parentElement).toBe(p6);
+    expect(r6[1].startContainer.parentElement).toBe(p6);
+  });
+  test("returns an empty array if no matches", () => {
+    const p = document.createElement("p");
+    p.textContent = "This is some sample text without matches.";
+    document.body.appendChild(p);
+
+    const ranges = getRangesOfText(document.body, /nomatch/g);
+    expect(ranges).toHaveLength(0);
+  });
+})
