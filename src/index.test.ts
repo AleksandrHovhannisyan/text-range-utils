@@ -309,7 +309,24 @@ describe("getSubstringRanges", () => {
     expect(r6[0].toString()).toBe('password');
     expect(r6[0].startContainer.parentElement).toBe(p6);
   });
-  
+
+  test("handles overlapping matches", () => {
+    const [t1, t2, t3] = [
+      document.createTextNode("aa"),
+      document.createTextNode("b"),
+      document.createTextNode("aa"),
+    ]
+    const p = document.createElement("p");
+    p.append(t1, t2, t3);
+    document.body.append(p);
+    
+    const ranges = getRangesOfText(document.body, /aba/g);
+    expect(ranges).toHaveLength(1);
+    expect(ranges[0].toString()).toBe('aba');
+    expect(ranges[0].startContainer).toBe(t1);
+    expect(ranges[0].startOffset).toBe(1);
+  })
+
   test("returns an empty array if no matches", () => {
     const p = document.createElement("p");
     p.textContent = "This is some sample text without matches.";
