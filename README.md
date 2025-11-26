@@ -10,18 +10,26 @@ npm install text-range-utils
 
 ## API
 
-The two basic utils are:
+### `getTextNodes(root: Node, options?: GetTextNodesOptions): Text[]`
 
-- [`getTextNodesInRange`](#gettextnodesinrangerange-range-options-gettextnodesoptions-text)
-- [`wrapTextNode`](#wraptextnodenode-text-wrapperelement-node-options-wraptextnodeoptions-unwrapfn)
+Returns all text nodes under the given root node and its descendants.
 
-You can use these individually, combine them yourself, or use the following composed utils:
+#### Options
 
-- `getSelectedTextNodes`
-- `wrapRangeTextNodes`
-- `wrapSelectedTextNodes`
+```ts
+type GetTextNodesOptions = {
+  /** Any text node that is a descendant of one of these tags will be ignored. */
+  disallowedAncestorTags?: (keyof HTMLElementTagNameMap)[];
+};
+```
 
-See below for details.
+#### Example
+
+```ts
+const textNodes = getTextNodes(document.body, {
+  disallowedAncestorTags: ["script", "style", "iframe", "noscript"],
+});
+```
 
 ### `getTextNodesInRange(range: Range, options?: GetTextNodesOptions): Text[]`
 
@@ -36,7 +44,7 @@ type GetTextNodesOptions = {
 };
 ```
 
-#### Examples
+#### Example
 
 ```ts
 const range = new Range();
@@ -59,7 +67,7 @@ type GetTextNodesOptions = {
 };
 ```
 
-#### Examples
+#### Example
 
 ```ts
 const selection = window.getSelection();
@@ -87,7 +95,7 @@ type WrapTextNodeOptions = {
 };
 ```
 
-#### Examples
+#### Example
 
 ```ts
 const wrapper = document.createElement("span");
@@ -113,10 +121,10 @@ unwrap();
 type WrapRangeTextNodesOptions = GetTextNodesOptions & {
   /** Optional callback to filter which text nodes are wrapped. If this function returns `true`, `node` will be wrapped; else, it will be ignored. */
   shouldWrapNode?: (node: Text) => boolean;
-}
+};
 ```
 
-#### Examples
+#### Example
 
 ```ts
 const range = new Range();
@@ -134,10 +142,10 @@ const unwrap = wrapRangeTextNodes(range, wrapper);
 type WrapRangeTextNodesOptions = GetTextNodesOptions & {
   /** Optional callback to filter which text nodes are wrapped. If this function returns `true`, `node` will be wrapped; else, it will be ignored. */
   shouldWrapNode?: (node: Text) => boolean;
-}
+};
 ```
 
-#### Examples
+#### Example
 
 ```ts
 const selection = window.getSelection();

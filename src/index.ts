@@ -3,7 +3,7 @@ type LooseStringUnion<T> = T | (string & {});
 
 export type GetTextNodesOptions = {
   /** Any text node that is a descendant of one of these tags will be ignored. */
-  disallowedAncestorTags?: (LooseStringUnion<keyof HTMLElementTagNameMap>)[];
+  disallowedAncestorTags?: LooseStringUnion<keyof HTMLElementTagNameMap>[];
 };
 
 export type WrapTextNodeOptions = {
@@ -16,17 +16,16 @@ export type WrapTextNodeOptions = {
 export type WrapRangeTextNodesOptions = GetTextNodesOptions & {
   /** Optional callback to filter which text nodes are wrapped. If this function returns `true`, `node` will be wrapped; else, it will be ignored. */
   shouldWrapNode?: (node: Text) => boolean;
-}
+};
 
 /** A callback that unwraps a node. */
 export type UnwrapFn = () => void;
 
-/** Returns all of the text nodes that intersect with the given range.
- * @param range The Range to search for text nodes.
- * @param options Customization options for node searching behavior.
+/**
+ * Returns all text nodes under the given root node and its descendants.
  */
-export function getTextNodesInRange(
-  range: Range,
+export function getTextNodes(
+  root: Node,
   options?: GetTextNodesOptions
 ): Text[] {
   const { disallowedAncestorTags } = {
@@ -35,7 +34,7 @@ export function getTextNodesInRange(
   const textNodes: Text[] = [];
 
   const walker = document.createTreeWalker(
-    range.commonAncestorContainer,
+    root,
     NodeFilter.SHOW_TEXT,
     (node: Node) => {
       const immediateParent = node.parentElement;
@@ -47,13 +46,11 @@ export function getTextNodesInRange(
       ) {
         return NodeFilter.FILTER_REJECT;
       }
-      return range.intersectsNode(node)
-        ? NodeFilter.FILTER_ACCEPT
-        : NodeFilter.FILTER_REJECT;
+      return NodeFilter.FILTER_ACCEPT;
     }
   );
-  // commonAncestorContainer would be a text node only if the range encompasses pure text. Otherwise, if it spans element boundaries, get nextNode.
   let currentNode =
+    // You'd think this would always be true, but apparently not!
     walker.currentNode.nodeType === Node.TEXT_NODE
       ? walker.currentNode
       : walker.nextNode();
@@ -62,6 +59,19 @@ export function getTextNodesInRange(
     currentNode = walker.nextNode();
   }
   return textNodes;
+}
+
+/** Returns all of the text nodes that intersect with the given range.
+ * @param range The Range to search for text nodes.
+ * @param options Customization options for node searching behavior.
+ */
+export function getTextNodesInRange(
+  range: Range,
+  options?: GetTextNodesOptions
+): Text[] {
+  return getTextNodes(range.commonAncestorContainer, options).filter((node) =>
+    range.intersectsNode(node)
+  );
 }
 
 /** Returns all text nodes that are partially or fully selected.
@@ -134,7 +144,7 @@ export function wrapRangeTextNodes(
   const unwrapCallbacks: UnwrapFn[] = [];
   const selectedTextNodes = getTextNodesInRange(range, getTextNodeOptions);
   selectedTextNodes.forEach((node) => {
-    if (typeof shouldWrapNode !== 'undefined' && !shouldWrapNode(node)) {
+    if (typeof shouldWrapNode !== "undefined" && !shouldWrapNode(node)) {
       return;
     }
     let startOffset =
